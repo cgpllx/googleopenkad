@@ -106,43 +106,46 @@ public class StableBucket implements Bucket {
 
 		final PingRequest pingRequest = pingRequestProvider.get();
 
-		final MessageDispatcher<Void> dispatcher = msgDispatcherProvider.get().setConsumable(true).addFilter(new IdMessageFilter(pingRequest.getId())).addFilter(new TypeMessageFilter(PingResponse.class)).setCallback(null, new CompletionHandler<KadMessage, Void>() {
-			@Override
-			public void completed(KadMessage msg, Void nothing) {
-				// ping was recved
-				inBucket.setNodeWasContacted();
-				inBucket.releasePingLock();
-				synchronized (StableBucket.this) {
-					if (bucket.remove(inBucket)) {
-						bucket.add(inBucket);
-					}
-				}
-			}
-
-			@Override
-			public void failed(Throwable exc, Void nothing) {
-				// ping was not recved
-				synchronized (StableBucket.this) {
-					// try to remove the already in bucket and
-					// replace it with the new candidate that we
-					// just heard from.
-					if (bucket.remove(inBucket)) {
-						// successfully removed the old node that
-						// did not answer my ping
-
-						// try insert the new candidate
-						if (!bucket.add(replaceIfFailed)) {
-							// candidate was already in bucket
-							// return the inBucket to be the oldest node in
-							// the bucket since we don't want our bucket
-							// to shrink unnecessarily
-							bucket.add(0, inBucket);
+		final MessageDispatcher<Void> dispatcher = msgDispatcherProvider.get().setConsumable(true)//
+				.addFilter(new IdMessageFilter(pingRequest.getId()))//
+				.addFilter(new TypeMessageFilter(PingResponse.class))//
+				.setCallback(null, new CompletionHandler<KadMessage, Void>() {
+					@Override
+					public void completed(KadMessage msg, Void nothing) {
+						// ping was recved
+						inBucket.setNodeWasContacted();
+						inBucket.releasePingLock();
+						synchronized (StableBucket.this) {
+							if (bucket.remove(inBucket)) {
+								bucket.add(inBucket);
+							}
 						}
 					}
-				}
-				inBucket.releasePingLock();
-			}
-		});
+
+					@Override
+					public void failed(Throwable exc, Void nothing) {
+						// ping was not recved
+						synchronized (StableBucket.this) {
+							// try to remove the already in bucket and
+							// replace it with the new candidate that we
+							// just heard from.
+							if (bucket.remove(inBucket)) {
+								// successfully removed the old node that
+								// did not answer my ping
+
+								// try insert the new candidate
+								if (!bucket.add(replaceIfFailed)) {
+									// candidate was already in bucket
+									// return the inBucket to be the oldest node in
+									// the bucket since we don't want our bucket
+									// to shrink unnecessarily
+									bucket.add(0, inBucket);
+								}
+							}
+						}
+						inBucket.releasePingLock();
+					}
+				});
 
 		try {
 			pingExecutor.execute(new Runnable() {
