@@ -157,6 +157,9 @@ public class StableBucket implements Bucket {
 		}
 	}
 
+	/**
+	 * 把当前k桶中的n节点删除
+	 */
 	@Override
 	public synchronized void markDead(Node n) {
 		for (int i = 0; i < bucket.size(); ++i) {
@@ -171,6 +174,9 @@ public class StableBucket implements Bucket {
 	}
 
 	@Override
+	/**
+	 * 把这个k桶中的节点放在集合中
+	 */
 	public synchronized void addNodesTo(Collection<Node> c) {
 		for (KadNode n : bucket) {
 			c.add(n.getNode());

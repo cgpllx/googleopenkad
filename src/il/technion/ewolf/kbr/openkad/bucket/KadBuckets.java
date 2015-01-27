@@ -134,14 +134,14 @@ public class KadBuckets implements KBuckets {
 		if (index < 0)
 			index = 0;
 
-		buckets[index].addNodesTo($);
+		buckets[index].addNodesTo($);// 集合中已经有数据了
 
-		if ($.size() < n) {
+		if ($.size() < n) {// 不够n个
 			// look in other buckets
 			for (int i = 1; $.size() < n; ++i) {
-				if (index + i < buckets.length) {
+				if (index + i < buckets.length) {// 没有超出
 					buckets[index + i].addNodesTo(t);
-					t.removeAll(exclude);
+					t.removeAll(exclude);// exclude本来是空的？？？
 					$.addAll(t);
 					t.clear();
 				}
@@ -158,7 +158,7 @@ public class KadBuckets implements KBuckets {
 			}
 		}
 
-		return $;
+		return $;// 返回时候有可能超过n个了
 	}
 
 	/**
@@ -168,15 +168,15 @@ public class KadBuckets implements KBuckets {
 	 */
 	public void insert(KadNode node) {
 		int i = getKBucketIndex(node.getNode().getKey());// 产生一个0-159之间的数，由key决定
-		//其实i就代表是哪一层
+		// 其实i就代表是哪一层
 		if (i == -1)
 			return;
 
-		kbuckets[i].insert(node);//插入代指定的楼层
+		kbuckets[i].insert(node);// 插入代指定的楼层
 	}
 
 	/**
-	 * 
+	 * 获取所有的节点
 	 * @return a list containing all the nodes in the data structure
 	 */
 	public List<Node> getAllNodes() {
@@ -202,6 +202,7 @@ public class KadBuckets implements KBuckets {
 	 *            key to calculate the bucket from
 	 * @return a list of nodes from a particular bucket
 	 */
+	//返回指定桶中的内容
 	public List<Node> getAllFromBucket(Key k) {
 		int i = getKBucketIndex(k);
 		if (i == -1)
@@ -220,14 +221,18 @@ public class KadBuckets implements KBuckets {
 	 *            the maximum number of nodes expected
 	 * @return a list of nodes sorted by proximity to k
 	 */
+	/**
+	 * 返回相似的n个节点
+	 */
+
 	public List<Node> getClosestNodesByKey(Key k, int n) {
 		List<Node> $ = getClosestNodes(k, n, getKBucketIndex(k), kbuckets);
 		if ($.isEmpty())
 			return $;
-		$ = sort($, on(Node.class).getKey(), new KeyComparator(k));
+		$ = sort($, on(Node.class).getKey(), new KeyComparator(k));//排序    越相似越靠前 越小越靠前
 		if ($.size() > n)
-			$.subList(n, $.size()).clear();
-		return $;
+			$.subList(n, $.size()).clear();//裁剪多余的部分，然后清空他们
+		return $;//
 	}
 
 	/**
@@ -238,6 +243,9 @@ public class KadBuckets implements KBuckets {
 	 * @param n
 	 *            the maximum number of nodes expected
 	 * @return a list of nodes sorted by proximity to the given key's color
+	 */
+	/**
+	 * 这个和上面一样，只是比较器不一样
 	 */
 	public List<Node> getClosestNodesByColor(Key k, int n) {
 		List<Node> $ = getClosestNodes(k, n, getKBucketIndex(k), kbuckets);
